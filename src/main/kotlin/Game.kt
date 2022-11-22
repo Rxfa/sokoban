@@ -14,10 +14,29 @@ fun Game.draw(canvas: Canvas){
     canvas.erase()
     man.drawMan(canvas)
 }
-
+/*
+    canvas.drawImage("soko|120,217,40,52",x,x,x,x) // desenhar caixa escura
+canvas.drawImage("soko|80,217,40,52",x,x,x,x) // desenhar caixa branca
+canvas.drawImage("soko|40,217,40,52",x,x,x,x) // desenhar parede
+canvas.drawImage("soko|0,217,40,52",x,x,x,x) // desenhar bola azul
+canvas.drawImage("soko|40,0,40,52",x,x,x,x) // desenhar homem parado UP
+canvas.drawImage("soko|40,52,40,52",x,x,x,x) // desenhar homem parado Right
+canvas.drawImage("soko|40,104,40,52",x,x,x,x) // desenhar homem parado Down
+canvas.drawImage("soko|40,156,40,52",x,x,x,x) // desenhar homem parado Left
+canvas.drawImage("soko|160,0,40,52",x,x,x,x) // desenhar homem empurrar UP
+canvas.drawImage("soko|160,52,40,52",x,x,x,x) // desenhar homem empurrar Right
+canvas.drawImage("soko|160,104,40,52",x,x,x,x) // desenhar homem empurrar Down
+canvas.drawImage("soko|160,156,40,52",x,x,x,x) //
+ */
 fun Man.drawMan(canvas:Canvas){
+    val manDir = when(dir){
+        Direction.DOWN -> "soko|40,104,40,52"
+            Direction.RIGHT -> "soko|40,52,40,52"
+            Direction.LEFT -> "soko|40,156,40,52"
+            Direction.UP -> "soko|40,0,40,52"
+    }
     canvas.drawImage(
-        "soko|40,52,40,52",
+        manDir,
         pos.col,
         pos.line,
         40,
