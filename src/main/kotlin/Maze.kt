@@ -1,4 +1,4 @@
-package Maze
+//package Maze
 
 /**
  * Maze map textually described.
