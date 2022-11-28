@@ -5,59 +5,52 @@ const val BLOCK_WIDTH = 40
 const val GRID_HEIGHT = BLOCK_HEIGHT * 8
 const val GRID_WIDTH = BLOCK_WIDTH * 8
 
-data class Game(val dim:Dimension, val man:Man)
+data class Game(
+    val dim: Dimension,
+    val man: Man,
+    val boxes: List<Position>,
+    val walls: List<Position>,
+    val targets: List<Position>
+)
 
-enum class Direction {UP, RIGHT, DOWN, LEFT}
+enum class Direction { UP, RIGHT, DOWN, LEFT }
 
-fun Game.draw(canvas: Canvas, maze: Maze){
+fun Game.draw(canvas: Canvas, maze: Maze) {
     canvas.erase()
-    boxes.drawBoxes(canvas)
-    targets.drawTargets(canvas)
-    walls.drawWall(canvas)
-    man.drawMan(canvas, manPos)
-    /*if (this.man.isInLimits(maze.positionsOfType(Type.WALL)))
-    else
-        this.man.drawMan(canvas, this.man.pos)
-*/
+    this.walls.drawWall(canvas)
+    this.targets.drawTargets(canvas)
+    this.boxes.drawBoxes(canvas)
+    this.man.drawMan(canvas)
 }
-/*
-fun List<Cell>.drawMap(canvas: Canvas, man: Man){
-    this.forEach {
-        val filename = when(it.type) {
-            Type.WALL -> "soko|40,217,40,52"
-            Type.BOX -> "soko|80,217,40,52"
-            Type.TARGET -> "soko|0,217,40,52"
-            Type.MAN -> when(man.dir){
-                Direction.DOWN -> "soko|40,104,40,52"
-                Direction.RIGHT -> "soko|40,52,40,52"
-                Direction.LEFT -> "soko|40,156,40,52"
-                Direction.UP -> "soko|40,0,40,52"
-            }
-        }
-        if (it.type == Type.MAN)
-            canvas.drawImage(filename, man.pos.col, man.pos.line, BLOCK_WIDTH, BLOCK_HEIGHT)
-        else
-            canvas.drawImage(filename, it.pos.col * BLOCK_WIDTH, it.pos.line * BLOCK_HEIGHT, BLOCK_WIDTH, BLOCK_HEIGHT)
 
-    }
-}
-*/
-fun main(){
+
+fun main() {
     onStart {
         val gridDimension = Dimension(GRID_WIDTH, GRID_HEIGHT)
-        val mazeDesc = loadMap(level1)
-        val arena = Canvas(mazeDesc.width * BLOCK_WIDTH, mazeDesc.height * BLOCK_HEIGHT, WHITE)
-        //val manCellPos = mazeDesc.cells.filter { it.type == Type.MAN}.first().pos
+        val mapLayout = loadMap(level1)
+        val arena = Canvas(mapLayout.width * BLOCK_WIDTH, mapLayout.height * BLOCK_HEIGHT, WHITE)
         val manCellPos = loadMap(level1).positionOfType(Type.MAN)
-        var myGame = Game(
-            gridDimension,
-            Man(Position(manCellPos.col * BLOCK_WIDTH, manCellPos.line * BLOCK_HEIGHT), Direction.UP)
-        )
-        myGame.draw(arena, mazeDesc)
-        arena.onKeyPressed{k ->
-            myGame = Game(gridDimension, myGame.man.move(k.code))
-            myGame.draw(arena, mazeDesc)
+        val manStartingPosition = Man(manCellPos, Direction.RIGHT, false)
+        var myGame = Game(gridDimension, manStartingPosition, boxes, walls, targets)
+        myGame.draw(arena, mapLayout)
+        arena.onKeyPressed { k ->
+            println("boxes: ${targets.containsAll(myGame.boxes)}")
+            val manNextPosition = myGame.moveMan(convertKeyToDir(k.code))
+            val boxNextPosition = if (myGame.boxes.contains(manNextPosition.pos) &&
+                manNextPosition.verifyNextStep(
+                    manNextPosition.dir,
+                    myGame.walls,
+                    myGame.targets,
+                    myGame.boxes
+                ) != "wall"
+            ) {
+                myGame.boxes.moveBoxes(manNextPosition)
+            } else {
+                myGame.boxes
             }
+            myGame = Game(gridDimension, manNextPosition, boxNextPosition, walls, targets)
+            myGame.draw(arena, mapLayout)
         }
-    onFinish {  }
     }
+    onFinish { }
+}

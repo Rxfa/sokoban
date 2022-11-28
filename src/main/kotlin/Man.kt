@@ -1,59 +1,69 @@
 import pt.isel.canvas.*
 
+data class Man(val pos: Position, val dir: Direction, val push: Boolean = false)
 
-data class Man(val pos:Position, val dir:Direction, val push:Boolean = false)
+fun convertKeyToDir(key: Int): Direction? {
+    return when (key) {
+        UP_CODE -> Direction.UP
+        DOWN_CODE -> Direction.DOWN
+        RIGHT_CODE -> Direction.RIGHT
+        LEFT_CODE -> Direction.LEFT
+        else -> null
+    }
+}
 
-val manPos = loadMap(level1).positionOfType(Type.MAN)
-
-fun Man.drawMan(canvas: Canvas, position:Position){
-    val manDir = when(dir){
-        Direction.DOWN -> if(!this.push) "soko|40,104,40,52" else "soko|160,104,40,52"
-        Direction.RIGHT -> if(!this.push) "soko|40,52,40,52" else "soko|160,52,40,52"
-        Direction.LEFT -> if(!this.push) "soko|40,156,40,52" else "soko|160,156,40,52"
-        Direction.UP -> if(!this.push) "soko|40,0,40,52" else "soko|160,0,40,52"
+fun Man.drawMan(canvas: Canvas) {
+    val manImg = when (dir) {
+        Direction.DOWN -> if (push) "soko|160,104,40,52" else "soko|40,104,40,52"
+        Direction.RIGHT -> if (push) "soko|160,52,40,52" else "soko|40,52,40,52"
+        Direction.LEFT -> if (push) "soko|160,156,40,52" else "soko|40,156,40,52"
+        Direction.UP -> if (push) "soko|160,0,40,52" else "soko|40,0,40,52"
     }
     canvas.drawImage(
-        manDir,
-        pos.col,
-        pos.line,
+        manImg,
+        pos.col * BLOCK_WIDTH,
+        pos.line * BLOCK_HEIGHT,
         BLOCK_WIDTH,
         BLOCK_HEIGHT
     )
 }
 
-fun Man.move(key: Int):Man {
-    val nextStep = when(key){
-        UP_CODE -> Man(pos.copy(line=pos.line - BLOCK_HEIGHT), Direction.UP)
-        RIGHT_CODE -> Man(pos.copy(col=pos.col + BLOCK_WIDTH), Direction.RIGHT)
-        LEFT_CODE -> Man(pos.copy(col=pos.col - BLOCK_WIDTH), Direction.LEFT)
-        DOWN_CODE -> Man(pos.copy(line=pos.line + BLOCK_HEIGHT), Direction.DOWN)
-        else -> this
+fun Game.moveMan(dir: Direction?): Man {
+    dir ?: return man
+    println(man.verifyNextStep(dir, walls, targets, boxes))
+    val movedMan = when {
+        man.verifyNextStep(dir, walls, targets, boxes) in listOf("empty", "target") -> man.takeStep(dir)
+        man.verifyNextStep(dir, walls, targets, boxes) in listOf("box") &&
+                man.takeStep(dir).verifyNextStep(dir, walls, targets, boxes) !in listOf("wall") -> man.takeStep(dir)
+
+        else -> man.copy(dir = dir)
     }
-    return this.isInLimits(walls, nextStep)
-}
-fun Man.isInLimits(walls: List<Position>, nextPosition: Man): Man{
-    val manCopy = nextPosition.pos.copy(col=nextPosition.pos.col/BLOCK_WIDTH, line=nextPosition.pos.line/BLOCK_HEIGHT)
-    return if (!walls.contains(manCopy))
-        nextPosition
-        else if(manCopy in boxes) this.copy(dir=nextPosition.dir, push=true)
-        else this.copy(dir=nextPosition.dir)
-}
-// AVANÇAR DOIS QUADRADOS PARA VER SE A CAIXA BATE NUMA PAREDE OU NOUTRA CAIXA
-// N CONSEGUE EMPURRAR DUAS CAIXAS
-/*
-fun Man.pushBox(walls: List<Position>, nextPosition: Position, dir:Direction):Man {
-    val twoSteps = 2
-    val newPosition = when(dir){
-        Direction.UP -> this.pos.copy(line=pos.line - twoSteps * BLOCK_HEIGHT)
-        Direction.LEFT -> this.pos.copy(col=pos.col + twoSteps * BLOCK_WIDTH)
-        Direction.RIGHT -> this.pos.copy(col=pos.col - twoSteps * BLOCK_WIDTH)
-        Direction.DOWN -> this.pos.copy(line=pos.line + twoSteps * BLOCK_HEIGHT)
+    return if (toPushOrNotToPush(dir)) {
+        movedMan.copy(push = true)
+    } else {
+        movedMan.copy(push = false)
     }
-    if
 }
 
-canvas.drawImage("soko|160,0,40,52",x,x,x,x) // desenhar homem empurrar UP
-canvas.drawImage("soko|160,52,40,52",x,x,x,x) // desenhar homem empurrar Right
-canvas.drawImage("soko|160,104,40,52",x,x,x,x) // desenhar homem empurrar Down
-canvas.drawImage("soko|160,156,40,52",x,x,x,x) // desenhar homem empurrar Left
- */
+fun Man.takeStep(dir: Direction): Man {
+    return when (dir) {
+        Direction.UP -> Man(Position(pos.col, pos.line - 1), Direction.UP)
+        Direction.DOWN -> Man(Position(pos.col, pos.line + 1), Direction.DOWN)
+        Direction.LEFT -> Man(Position(pos.col - 1, pos.line), Direction.LEFT)
+        Direction.RIGHT -> Man(Position(pos.col + 1, pos.line), Direction.RIGHT)
+    }
+}
+
+fun Man.verifyNextStep(dir: Direction, walls: List<Position>, targets: List<Position>, boxes: List<Position>): String {
+    return when (takeStep(dir).pos) {
+        in walls -> "wall"
+        in boxes -> "box"
+        in targets -> "target"
+        else -> "empty"
+    }
+}
+
+fun Game.toPushOrNotToPush(dir: Direction) = listOf(
+    man.takeStep(dir).verifyNextStep(dir, walls, targets, boxes),
+    man.verifyNextStep(dir, walls, targets, boxes)
+).contains("box")

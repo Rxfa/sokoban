@@ -34,12 +34,12 @@ val original1 = listOf(
 /**
  * Type of each cell of a maze.
  */
-enum class Type{ WALL, TARGET, MAN, BOX }
+enum class Type { WALL, TARGET, MAN, BOX }
 
 /**
  * Column and line of one position.
  * @property col Number of column (0 until width)
- * @property line Numer of line (0 until height)
+ * @property line Number of line (0 until height)
  */
 data class Position(val col:Int, val line:Int)
 
@@ -56,7 +56,7 @@ data class Cell(val pos: Position, val type: Type)
  * @property height Total height of maze.
  * @property cells Position and type of each non-empty cell.
  */
-data class Maze(val width: Int, val height:Int, val cells: List<Cell>)
+data class Maze(val width: Int, val height: Int, val cells: List<Cell>)
 
 /**
  * Get the position of the first cell of a given [type].
@@ -64,7 +64,7 @@ data class Maze(val width: Int, val height:Int, val cells: List<Cell>)
  * @param type The type of cell to find.
  * @return Found cell position.
  */
-fun Maze.positionOfType(type: Type): Position = cells.first{ it.type==type }.pos
+fun Maze.positionOfType(type: Type): Position = cells.first { it.type == type }.pos
 
 /**
  * Get the positions of all cells of a given [type].
@@ -72,7 +72,7 @@ fun Maze.positionOfType(type: Type): Position = cells.first{ it.type==type }.pos
  * @param type The type of cell to find.
  * @return All cell positions of given [type].
  */
-fun Maze.positionsOfType(type: Type) = cells.filter{ it.type==type }.map{ it.pos }
+fun Maze.positionsOfType(type: Type) = cells.filter { it.type == type }.map { it.pos }
 
 /**
  * Convert a symbol from a cell in the map to its cell type.
@@ -97,11 +97,11 @@ fun loadMap(maze: List<String>): Maze {
         maze.forEachIndexed { idxLine, line ->
             line.forEachIndexed { idxCol, char ->
                 char.toCellType()?.let { type ->
-                    add( Cell(Position(idxCol, idxLine), type) )
+                    add(Cell(Position(idxCol, idxLine), type))
                 }
             }
         }
     }
-    return Maze(maze.maxOf{ it.length }, maze.size, cells)
+    return Maze(maze.maxOf { it.length }, maze.size, cells)
 }
 
