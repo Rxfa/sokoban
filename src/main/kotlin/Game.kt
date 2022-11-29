@@ -9,13 +9,13 @@ data class Game(
     val dim: Dimension,
     val man: Man,
     val boxes: List<Position>,
-    val walls: List<Position>,
-    val targets: List<Position>
+    val walls: List<Position> = loadMap(level1).positionsOfType(Type.WALL),
+    val targets: List<Position> = loadMap(level1).positionsOfType(Type.TARGET)
 )
 
 enum class Direction { UP, RIGHT, DOWN, LEFT }
 
-fun Game.draw(canvas: Canvas, maze: Maze) {
+fun Game.draw(canvas: Canvas) {
     canvas.erase()
     this.walls.drawWall(canvas)
     this.targets.drawTargets(canvas)
@@ -30,26 +30,22 @@ fun main() {
         val mapLayout = loadMap(level1)
         val arena = Canvas(mapLayout.width * BLOCK_WIDTH, mapLayout.height * BLOCK_HEIGHT, WHITE)
         val manCellPos = loadMap(level1).positionOfType(Type.MAN)
-        val manStartingPosition = Man(manCellPos, Direction.RIGHT, false)
-        var myGame = Game(gridDimension, manStartingPosition, boxes, walls, targets)
-        myGame.draw(arena, mapLayout)
+        val manStartingPosition = Man(manCellPos, Direction.RIGHT)
+        var myGame = Game(gridDimension, manStartingPosition, boxes)
+        myGame.draw(arena)
         arena.onKeyPressed { k ->
             println("boxes: ${targets.containsAll(myGame.boxes)}")
-            val manNextPosition = myGame.moveMan(convertKeyToDir(k.code))
+            val manNextPosition = if (!targets.containsAll(myGame.boxes)) myGame.moveMan(convertKeyToDir(k.code)) else
+                myGame.man
             val boxNextPosition = if (myGame.boxes.contains(manNextPosition.pos) &&
-                manNextPosition.verifyNextStep(
-                    manNextPosition.dir,
-                    myGame.walls,
-                    myGame.targets,
-                    myGame.boxes
-                ) != "wall"
+                manNextPosition.verifyNextStep(manNextPosition.dir, myGame.boxes) !in listOf("wall", "box")
             ) {
                 myGame.boxes.moveBoxes(manNextPosition)
             } else {
                 myGame.boxes
             }
             myGame = Game(gridDimension, manNextPosition, boxNextPosition, walls, targets)
-            myGame.draw(arena, mapLayout)
+            myGame.draw(arena)
         }
     }
     onFinish { }

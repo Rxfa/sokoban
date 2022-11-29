@@ -16,7 +16,7 @@ fun List<Position>.drawBoxes(canvas: Canvas) {
 }
 
 fun List<Position>.moveBoxes(man: Man): List<Position> {
-    return if (contains(man.pos) && man.verifyNextStep(man.dir, walls, targets, boxes) != "wall") {
+    return if (contains(man.pos) && man.verifyNextStep(man.dir, boxes) !in "wall") {
         val boxToBeMoved = first { it == man.pos }
         listOf(
             boxToBeMoved.nextPosition(man.dir),

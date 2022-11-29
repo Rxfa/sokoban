@@ -30,11 +30,11 @@ fun Man.drawMan(canvas: Canvas) {
 
 fun Game.moveMan(dir: Direction?): Man {
     dir ?: return man
-    println(man.verifyNextStep(dir, walls, targets, boxes))
+    println(man.verifyNextStep(dir, boxes))
     val movedMan = when {
-        man.verifyNextStep(dir, walls, targets, boxes) in listOf("empty", "target") -> man.takeStep(dir)
-        man.verifyNextStep(dir, walls, targets, boxes) in listOf("box") &&
-                man.takeStep(dir).verifyNextStep(dir, walls, targets, boxes) !in listOf("wall") -> man.takeStep(dir)
+        man.verifyNextStep(dir, boxes) in listOf("empty", "target") -> man.takeStep(dir)
+        man.verifyNextStep(dir, boxes) in listOf("box") &&
+        man.takeStep(dir).verifyNextStep(dir, walls) !in listOf("wall", "box") -> man.takeStep(dir)
 
         else -> man.copy(dir = dir)
     }
@@ -54,8 +54,8 @@ fun Man.takeStep(dir: Direction): Man {
     }
 }
 
-fun Man.verifyNextStep(dir: Direction, walls: List<Position>, targets: List<Position>, boxes: List<Position>): String {
-    return when (takeStep(dir).pos) {
+fun Man.verifyNextStep(dir: Direction, boxes: List<Position>): String {
+    return when (this.takeStep(dir).pos) {
         in walls -> "wall"
         in boxes -> "box"
         in targets -> "target"
@@ -64,6 +64,7 @@ fun Man.verifyNextStep(dir: Direction, walls: List<Position>, targets: List<Posi
 }
 
 fun Game.toPushOrNotToPush(dir: Direction) = listOf(
-    man.takeStep(dir).verifyNextStep(dir, walls, targets, boxes),
-    man.verifyNextStep(dir, walls, targets, boxes)
+    man.takeStep(dir).verifyNextStep(dir, boxes),
+    man.verifyNextStep(dir, boxes)
 ).contains("box")
+
