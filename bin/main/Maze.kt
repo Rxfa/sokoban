@@ -41,7 +41,7 @@ enum class Type { WALL, TARGET, MAN, BOX }
  * @property col Number of column (0 until width)
  * @property line Number of line (0 until height)
  */
-data class Position(val col:Int, val line:Int)
+data class Position(val col: Int, val line: Int)
 
 /**
  * Represents the position and type of each cell.
