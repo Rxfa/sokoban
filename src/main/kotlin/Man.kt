@@ -22,9 +22,9 @@ fun convertKeyToDir(key: Int) = when (key) {
  */
 fun Man.drawMan(canvas: Canvas) {
     val manImg = when (dir) {
-        Direction.DOWN -> if (push) "soko|160,104,40,52" else "soko|40,110,40,52"
-        Direction.RIGHT -> if (push) "soko|160,52,40,52" else "soko|40,52,40,52"
-        Direction.LEFT -> if (push) "soko|160,156,40,52" else "soko|40,156,40,52"
+        Direction.DOWN -> if (push) "soko|160,110,40,52" else "soko|40,110,40,52"
+        Direction.RIGHT -> if (push) "soko|160,55,40,52" else "soko|40,55,40,52"
+        Direction.LEFT -> if (push) "soko|160,163,40,52" else "soko|40,163,40,52"
         Direction.UP -> if (push) "soko|160,0,40,52" else "soko|40,0,40,52"
     }
     canvas.drawImage(
@@ -72,4 +72,5 @@ fun Man.isFacing(dir: Direction, updatedBoxes: List<Position>) = when (takeStep(
  * Returns True if [this.man] will be facing a box one or two steps ahead, when turned to a given [dir].
  */
 fun Game.isFacingBox(dir: Direction) =
-    "box" in listOf(man.isFacing(dir, boxes), man.takeStep(dir).isFacing(dir, boxes))
+    "box" in listOf(man.isFacing(dir, boxes), man.takeStep(dir).isFacing(dir, boxes)) &&
+            "wall" !in man.isFacing(dir, walls)
