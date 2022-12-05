@@ -1,20 +1,28 @@
 import pt.isel.canvas.*
 
+/**
+ * Represents man [Position], [Direction] and if it is facing a box.
+ */
 data class Man(val pos: Position, val dir: Direction, val push: Boolean = false)
 
-fun convertKeyToDir(key: Int): Direction? {
-    return when (key) {
-        UP_CODE -> Direction.UP
-        DOWN_CODE -> Direction.DOWN
-        RIGHT_CODE -> Direction.RIGHT
-        LEFT_CODE -> Direction.LEFT
-        else -> null
-    }
+/**
+ * Returns a [Direction] or null depending on the given [key].
+ */
+fun convertKeyToDir(key: Int) = when (key) {
+    UP_CODE -> Direction.UP
+    DOWN_CODE -> Direction.DOWN
+    RIGHT_CODE -> Direction.RIGHT
+    LEFT_CODE -> Direction.LEFT
+    else -> null
 }
 
+/**
+ * Draws a man, upsizing its coordinates and size to fit in the canvas.
+ * Gets different images depending on its [Position], [Direction], and if it's facing a box.
+ */
 fun Man.drawMan(canvas: Canvas) {
     val manImg = when (dir) {
-        Direction.DOWN -> if (push) "soko|160,104,40,52" else "soko|40,104,40,52"
+        Direction.DOWN -> if (push) "soko|160,104,40,52" else "soko|40,110,40,52"
         Direction.RIGHT -> if (push) "soko|160,52,40,52" else "soko|40,52,40,52"
         Direction.LEFT -> if (push) "soko|160,156,40,52" else "soko|40,156,40,52"
         Direction.UP -> if (push) "soko|160,0,40,52" else "soko|40,0,40,52"
@@ -28,43 +36,40 @@ fun Man.drawMan(canvas: Canvas) {
     )
 }
 
+/**
+ * Returns a [Man],
+with its properties depending on a given [dir] and the type of cell it will face one or two steps ahead.
+ */
 fun Game.moveMan(dir: Direction?): Man {
     dir ?: return man
-    println(man.verifyNextStep(dir, boxes))
     val movedMan = when {
-        man.verifyNextStep(dir, boxes) in listOf("empty", "target") -> man.takeStep(dir)
-        man.verifyNextStep(dir, boxes) in listOf("box") &&
-        man.takeStep(dir).verifyNextStep(dir, walls) !in listOf("wall", "box") -> man.takeStep(dir)
+        man.isFacing(dir, boxes) in listOf("empty", "target") -> man.takeStep(dir)
+        man.isFacing(dir, boxes) == "box" &&
+                man.takeStep(dir).isFacing(dir, boxes) !in listOf("wall", "box") -> man.takeStep(dir)
 
         else -> man.copy(dir = dir)
     }
-    return if (toPushOrNotToPush(dir)) {
-        movedMan.copy(push = true)
-    } else {
-        movedMan.copy(push = false)
-    }
+    return if (isFacingBox(dir)) movedMan.copy(push = true) else movedMan
 }
 
-fun Man.takeStep(dir: Direction): Man {
-    return when (dir) {
-        Direction.UP -> Man(Position(pos.col, pos.line - 1), Direction.UP)
-        Direction.DOWN -> Man(Position(pos.col, pos.line + 1), Direction.DOWN)
-        Direction.LEFT -> Man(Position(pos.col - 1, pos.line), Direction.LEFT)
-        Direction.RIGHT -> Man(Position(pos.col + 1, pos.line), Direction.RIGHT)
-    }
+/**
+ * Returns a [Man], changing its [Position] and [Direction] depending on a given [dir].
+ */
+fun Man.takeStep(dir: Direction) = Man(pos.nextPosition(dir), dir)
+
+/**
+ * Returns a string, according to the type of cell [this] is facing,
+given a [dir] and the [Position] of every box, target ,and wall in the map.
+ */
+fun Man.isFacing(dir: Direction, updatedBoxes: List<Position>) = when (takeStep(dir).pos) {
+    in walls -> "wall"
+    in updatedBoxes -> "box"
+    in targets -> "target"
+    else -> "empty"
 }
 
-fun Man.verifyNextStep(dir: Direction, boxes: List<Position>): String {
-    return when (this.takeStep(dir).pos) {
-        in walls -> "wall"
-        in boxes -> "box"
-        in targets -> "target"
-        else -> "empty"
-    }
-}
-
-fun Game.toPushOrNotToPush(dir: Direction) = listOf(
-    man.takeStep(dir).verifyNextStep(dir, boxes),
-    man.verifyNextStep(dir, boxes)
-).contains("box")
-
+/**
+ * Returns True if [this.man] will be facing a box one or two steps ahead, when turned to a given [dir].
+ */
+fun Game.isFacingBox(dir: Direction) =
+    "box" in listOf(man.isFacing(dir, boxes), man.takeStep(dir).isFacing(dir, boxes))

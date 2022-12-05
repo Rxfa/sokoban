@@ -1,50 +1,51 @@
 import pt.isel.canvas.*
 
-const val GRID_HEIGHT = 520
-const val GRID_WIDTH = 400
+const val BLOCK_HEIGHT = 52
+const val BLOCK_WIDTH = 40
+const val GRID_HEIGHT = BLOCK_HEIGHT * 10
+const val GRID_WIDTH = BLOCK_WIDTH * 10
 
-data class Game(val dim:Dimension, val man:Man)
-data class Dimension(val width:Int, val height:Int)
-data class Position(val col:Int, val line:Int)
-data class Man(val pos:Position, val dir:Direction, val push:Boolean = false)
+data class Game(
+    val dim: Dimension,
+    val man: Man,
+    val boxes: List<Position>,
+)
 
-enum class Direction {UP, RIGHT, DOWN, LEFT}
+enum class Direction { UP, RIGHT, DOWN, LEFT }
 
-fun Game.draw(canvas: Canvas){
+fun Game.draw(canvas: Canvas) {
     canvas.erase()
-    man.drawMan(canvas)
+    walls.drawWall(canvas)
+    targets.drawTargets(canvas)
+    this.boxes.drawBoxes(canvas)
+    this.man.drawMan(canvas)
 }
 
-fun Man.drawMan(canvas:Canvas){
-    canvas.drawImage(
-        "soko|40,52,40,52",
-        pos.col,
-        pos.line,
-        40,
-        52
-    )
-}
 
-fun Man.move(key: Int):Man {
-    return when(key){
-        UP_CODE -> Man(pos.copy(line=pos.line - 52), Direction.UP)
-        RIGHT_CODE -> Man(pos.copy(col=pos.col + 40), Direction.RIGHT)
-        LEFT_CODE -> Man(pos.copy(col=pos.col - 40), Direction.LEFT)
-        DOWN_CODE -> Man(pos.copy(line=pos.line + 52), Direction.DOWN)
-        else -> this
-    }
-}
-
-fun main(){
+fun main() {
     onStart {
         val gridDimension = Dimension(GRID_WIDTH, GRID_HEIGHT)
-        val arena = Canvas(gridDimension.width, gridDimension.height, WHITE)
-        var myGame = Game(gridDimension, Man(Position(50, 80), Direction.DOWN))
+        val mapLayout = loadMap(level1)
+        val arena = Canvas(mapLayout.width * BLOCK_WIDTH, mapLayout.height * BLOCK_HEIGHT, WHITE)
+        val manCellPos = loadMap(level1).positionOfType(Type.MAN)
+        val manStartingPosition = Man(manCellPos, Direction.RIGHT)
+        var myGame = Game(gridDimension, manStartingPosition, boxes)
         myGame.draw(arena)
-        arena.onKeyPressed{k ->
-            myGame = Game(gridDimension, myGame.man.move(k.code))
-            myGame.draw(arena)
+        arena.onKeyPressed { k ->
+            val manNextPosition = if (!targets.containsAll(myGame.boxes))
+                myGame.moveMan(convertKeyToDir(k.code))
+            else
+                myGame.man
+            val boxNextPosition = if (myGame.boxes.contains(manNextPosition.pos) &&
+                manNextPosition.verifyNextStep(manNextPosition.dir, myGame.boxes) !in listOf("wall", "box")
+            ) {
+                myGame.boxes.moveBoxes(manNextPosition)
+            } else {
+                myGame.boxes
             }
+            myGame = Game(gridDimension, manNextPosition, boxNextPosition)
+            myGame.draw(arena)
         }
-    onFinish {  }
     }
+    onFinish { }
+}
